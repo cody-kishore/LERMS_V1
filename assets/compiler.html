@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LERMS – Python Compiler</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #0d1117;
+            --surface:      #161b22;
+            --surface2:     #21262d;
+            --border:       #30363d;
+            --text:         #c9d1d9;
+            --text-muted:   #8b949e;
+            --primary:      #58a6ff;
+            --primary-dark: #388bfd;
+            --accent:       #3fb950;
+            --accent-hover: #2ea043;
+            --error:        #f85149;
+            --warn:         #d29922;
+            --radius:       10px;
+            --font-code:    'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        /* ── Layout ── */
+        .app {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        header .back-btn {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: .88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            transition: color .2s, border-color .2s;
+        }
+        header .back-btn:hover { color: var(--text); border-color: var(--text-muted); }
+        header h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            flex: 1;
+        }
+        header .badge {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: .78rem;
+            padding: 3px 10px;
+            border-radius: 50px;
+        }
+
+        /* ── Main ── */
+        .editor-area {
+            display: grid;
+            grid-template-rows: 1fr auto 1fr;
+            gap: 0;
+            overflow: hidden;
+            padding: 16px;
+            gap: 12px;
+        }
+
+        /* ── Code editor panel ── */
+        .panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            font-size: .82rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .panel-header .dot {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .dot-red    { background: #ff5f57; }
+        .dot-yellow { background: #febc2e; }
+        .dot-green  { background: #28c840; }
+
+        #codeBox {
+            flex: 1;
+            width: 100%;
+            background: transparent;
+            color: var(--text);
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: var(--font-code);
+            font-size: .95rem;
+            line-height: 1.65;
+            padding: 14px 16px;
+            tab-size: 4;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+        #codeBox::placeholder { color: var(--text-muted); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        #runBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 11px 28px;
+            border-radius: 8px;
+            font-size: .95rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: .3px;
+            transition: background .2s, transform .12s;
+        }
+        #runBtn:hover  { background: var(--accent-hover); }
+        #runBtn:active { transform: scale(.97); }
+        #runBtn:disabled { opacity: .5; cursor: not-allowed; }
+        #runBtn .icon { font-size: 1.1rem; }
+
+        #clearBtn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: .88rem;
+            cursor: pointer;
+            transition: color .2s, border-color .2s;
+        }
+        #clearBtn:hover { color: var(--text); border-color: var(--text-muted); }
+
+        .status-indicator {
+            margin-left: auto;
+            font-size: .82rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .status-indicator.running { color: var(--warn); }
+        .status-indicator.done    { color: var(--accent); }
+        .status-indicator.error   { color: var(--error); }
+
+        /* ── Output panel ── */
+        #outputBox {
+            flex: 1;
+            width: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-code);
+            font-size: .9rem;
+            line-height: 1.65;
+            padding: 14px 16px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        #outputBox.error-output { color: var(--error); }
+        #outputBox .placeholder-text { color: var(--text-muted); font-style: italic; }
+
+        /* ── Responsive ── */
+        @media (min-width: 768px) {
+            .editor-area {
+                grid-template-rows: 1fr auto auto;
+                grid-template-columns: 1fr 1fr;
+            }
+            .panel:first-child { grid-column: 1; grid-row: 1 / 3; }
+            .toolbar           { grid-column: 1 / 3; grid-row: 2; }
+            .panel:last-child  { grid-column: 2; grid-row: 1; }
+        }
+
+        @media (min-width: 768px) {
+            .editor-area {
+                grid-template-rows: 1fr auto;
+                grid-template-columns: 1fr 1fr;
+            }
+            .panel:first-child { grid-row: 1; grid-column: 1; }
+            .toolbar           { grid-row: 2; grid-column: 1 / 3; }
+            .panel:last-child  { grid-row: 1; grid-column: 2; }
+        }
+
+        @media (max-width: 767px) {
+            .editor-area { grid-template-rows: minmax(0, 2fr) auto minmax(0, 1.5fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <header>
+        <a class="back-btn" href="index.html">&#8592; Library</a>
+        <h1>&#x1F40D; LERMS Python Compiler</h1>
+        <span class="badge">Python 3 &bull; Offline</span>
+    </header>
+
+    <div class="editor-area">
+
+        <!-- Code input panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+                <span style="margin-left:6px">main.py</span>
+            </div>
+            <textarea
+                id="codeBox"
+                spellcheck="false"
+                autocorrect="off"
+                autocapitalize="none"
+                placeholder="# Write your Python code here&#10;print('Hello, LERMS!')"
+            ></textarea>
+        </div>
+
+        <!-- Run / clear toolbar -->
+        <div class="toolbar">
+            <button id="runBtn" onclick="runCode()">
+                <span class="icon">&#9654;</span>
+                RUN
+            </button>
+            <button id="clearBtn" onclick="clearOutput()">Clear Output</button>
+            <span class="status-indicator" id="statusLabel">Ready</span>
+        </div>
+
+        <!-- Output panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+                <span style="margin-left:6px">Output</span>
+            </div>
+            <pre id="outputBox"><span class="placeholder-text">Output will appear here after you click RUN.</span></pre>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const codeBox    = document.getElementById('codeBox');
+    const outputBox  = document.getElementById('outputBox');
+    const runBtn     = document.getElementById('runBtn');
+    const statusLbl  = document.getElementById('statusLabel');
+
+    // Tab key inserts spaces instead of changing focus
+    codeBox.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = codeBox.selectionStart;
+            const end   = codeBox.selectionEnd;
+            codeBox.value = codeBox.value.slice(0, start) + '    ' + codeBox.value.slice(end);
+            codeBox.selectionStart = codeBox.selectionEnd = start + 4;
+        }
+        // Ctrl+Enter or Cmd+Enter to run
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            runCode();
+        }
+    });
+
+    async function runCode() {
+        const code = codeBox.value.trim();
+        if (!code) {
+            setOutput('(nothing to run — write some Python code first)', false);
+            return;
+        }
+
+        runBtn.disabled  = true;
+        setStatus('running', 'Running...');
+        setOutput('', false);
+
+        try {
+            const response = await fetch('/run_python', {
+                method:  'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body:    code
+            });
+
+            const text = await response.text();
+
+            const isError = text.startsWith('Error:');
+            setOutput(text, isError);
+            setStatus(isError ? 'error' : 'done', isError ? 'Error' : 'Done');
+
+        } catch (err) {
+            setOutput(
+                `Connection error: ${err.message}\n\nMake sure the LERMS server is running (flip Host Mode ON in the app).`,
+                true
+            );
+            setStatus('error', 'Connection error');
+        } finally {
+            runBtn.disabled = false;
+        }
+    }
+
+    function clearOutput() {
+        outputBox.className = '';
+        outputBox.innerHTML = '<span class="placeholder-text">Output will appear here after you click RUN.</span>';
+        setStatus('', 'Ready');
+    }
+
+    function setOutput(text, isError) {
+        outputBox.className = isError ? 'error-output' : '';
+        outputBox.textContent = text;
+    }
+
+    function setStatus(cls, text) {
+        statusLbl.className = 'status-indicator' + (cls ? ' ' + cls : '');
+        statusLbl.textContent = text;
+    }
+</script>
+
+</body>
+</html>

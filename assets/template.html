@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LERMS – Classroom Library</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:       #1565c0;
+            --primary-light: #1e88e5;
+            --primary-dark:  #0d47a1;
+            --accent:        #00c853;
+            --accent-hover:  #00a846;
+            --bg:            #f0f4f8;
+            --surface:       #ffffff;
+            --text:          #1a202c;
+            --text-muted:    #718096;
+            --border:        #e2e8f0;
+            --shadow:        0 2px 12px rgba(0,0,0,.10);
+            --radius:        12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            color: #fff;
+            padding: 28px 24px 24px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,.25);
+        }
+        header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+        header p  { margin-top: 6px; opacity: .85; font-size: .95rem; }
+
+        /* ── Compiler button ── */
+        .compiler-btn-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 20px 24px 8px;
+        }
+        .btn-compiler {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: .3px;
+            box-shadow: 0 4px 14px rgba(0,200,83,.35);
+            transition: background .2s, transform .15s, box-shadow .2s;
+        }
+        .btn-compiler:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,200,83,.45);
+        }
+        .btn-compiler svg { width: 20px; height: 20px; fill: #fff; }
+
+        /* ── Search ── */
+        .search-wrapper {
+            padding: 16px 24px 0;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        #searchBox {
+            width: 100%;
+            padding: 12px 18px;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color .2s;
+            background: var(--surface);
+        }
+        #searchBox:focus { border-color: var(--primary-light); }
+
+        /* ── Grid ── */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            padding: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: transform .2s, box-shadow .2s;
+            border: 1px solid var(--border);
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
+
+        .card-title {
+            font-weight: 600;
+            font-size: .95rem;
+            color: var(--text);
+            line-height: 1.4;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .pdf-icon {
+            font-size: 2.5rem;
+            text-align: center;
+            color: var(--primary-light);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn {
+            flex: 1;
+            display: inline-block;
+            padding: 9px 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: .85rem;
+            text-align: center;
+            text-decoration: none;
+            letter-spacing: .4px;
+            transition: background .2s, transform .1s;
+            cursor: pointer;
+        }
+        .btn:active { transform: scale(.96); }
+
+        .btn-view {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-view:hover { background: var(--primary-dark); }
+
+        .btn-save {
+            background: var(--bg);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        .btn-save:hover { background: var(--primary); color: #fff; }
+
+        /* ── Empty state ── */
+        .no-pdfs {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            padding: 60px 0;
+        }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: .82rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.4rem; }
+            .grid { padding: 16px; gap: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📚 LERMS Classroom Library</h1>
+    <p>Offline educational resource sharing &mdash; powered by LERMS Engine</p>
+</header>
+
+<div class="compiler-btn-wrapper">
+    <a class="btn-compiler" href="compiler.html" target="_blank">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3a1 1 0 0 1 .832.445l.062.111L12 10.276l3.106-6.72A1 1 0 0 1 17 3h3a1 1 0 0 1 .117 1.993L20 5h-2.382l-4.224 9.14a1 1 0 0 1-1.73.042L7.382 5H5a1 1 0 0 1-.993-.883L4 4a1 1 0 0 1 1-1h3zm12 14a1 1 0 0 1 .117 1.993L20 19H4a1 1 0 0 1-.117-1.993L4 17h16z"/>
+        </svg>
+        Open Python Compiler
+    </a>
+</div>
+
+<div class="search-wrapper">
+    <input
+        id="searchBox"
+        type="search"
+        placeholder="Search PDFs..."
+        oninput="filterCards(this.value)"
+    />
+</div>
+
+<div class="grid" id="cardGrid">
+    <!-- PDF_CARDS_PLACEHOLDER -->
+</div>
+
+<footer>
+    LERMS &copy; 2024 &mdash; Local Resource Management System &mdash; Offline Mode
+</footer>
+
+<script>
+    function filterCards(query) {
+        const q = query.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+            const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+            card.style.display = title.includes(q) ? '' : 'none';
+        });
+    }
+
+    // Add PDF icon to each card on load
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.card').forEach(card => {
+            const icon = document.createElement('div');
+            icon.className = 'pdf-icon';
+            icon.textContent = '📄';
+            card.insertBefore(icon, card.firstChild);
+        });
+    });
+</script>
+
+</body>
+</html>
